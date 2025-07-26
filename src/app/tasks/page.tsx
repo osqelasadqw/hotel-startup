@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getTasksByAssignee, completeTask, acceptTaskAssignment, rejectTaskAssignment, subscribeToTasks, subscribeToGuestRequests, acceptGuestRequest } from '@/services/taskService';
 import { getDepartmentById } from '@/services/departmentService';
@@ -21,6 +21,36 @@ const TasksPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
+
+  const fetchTasks = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Fetching tasks for user:", user.id);
+      const tasks = await getTasksByAssignee(user.id);
+      console.log("Tasks loaded:", tasks.length);
+      
+      // Filter tasks by status
+      const pending = tasks.filter(task => task.status === 'assigned');
+      const inProgress = tasks.filter(task => task.status === 'in_progress');
+      const completed = tasks.filter(task => task.status === 'completed');
+      
+      console.log(`Tasks by status: Pending: ${pending.length}, In Progress: ${inProgress.length}, Completed: ${completed.length}`);
+      
+      setPendingTasks(pending);
+      setAssignedTasks(inProgress);
+      setCompletedTasks(completed);
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      setError("შეცდომა დავალებების ჩატვირთვისას");
+      setIsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -74,7 +104,7 @@ const TasksPage = () => {
       unsubscribeTasks();
       unsubscribeRequests();
     };
-  }, [user]);
+  }, [user, fetchTasks]);
   
   const fetchDepartment = async (departmentId: string) => {
     try {
@@ -121,36 +151,6 @@ const TasksPage = () => {
         createdAt: new Date().toISOString(),
         commonProblems: []
       });
-    }
-  };
-
-  const fetchTasks = async () => {
-    if (!user) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      console.log("Fetching tasks for user:", user.id);
-      const tasks = await getTasksByAssignee(user.id);
-      console.log("Tasks loaded:", tasks.length);
-      
-      // Filter tasks by status
-      const pending = tasks.filter(task => task.status === 'assigned');
-      const inProgress = tasks.filter(task => task.status === 'in_progress');
-      const completed = tasks.filter(task => task.status === 'completed');
-      
-      console.log(`Tasks by status: Pending: ${pending.length}, In Progress: ${inProgress.length}, Completed: ${completed.length}`);
-      
-      setPendingTasks(pending);
-      setAssignedTasks(inProgress);
-      setCompletedTasks(completed);
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      setError("შეცდომა დავალებების ჩატვირთვისას");
-      setIsLoading(false);
     }
   };
 

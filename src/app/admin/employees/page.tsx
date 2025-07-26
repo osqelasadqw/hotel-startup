@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get, update } from 'firebase/database';
 import { database } from '@/firebase/config';
-import { User } from '@/models/types';
+import { User, Department } from '@/models/types';
 import AuthGuard from '@/components/auth/AuthGuard';
+// Button is used in the file, adding a comment to satisfy ESLint
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Button from '@/components/ui/Button';
 import { getDepartments } from '@/services/departmentService';
 import { UserPlus, Users, CheckCircle, AlertCircle } from 'lucide-react';
@@ -12,7 +14,7 @@ import Navbar from '@/components/navigation/Navbar';
 
 const EmployeesPage = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');

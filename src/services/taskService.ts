@@ -1,8 +1,9 @@
-import { ref, push, set, get, update, remove, query, orderByChild, equalTo, onValue, off } from 'firebase/database';
+import { ref, push, set, get, update, remove, onValue, off } from 'firebase/database';
 import { database } from '@/firebase/config';
-import { Task, TaskAssignment, User, EmployeePerformance } from '@/models/types';
+import { Task, TaskAssignment, EmployeePerformance } from '@/models/types';
 import { getDepartmentEmployees } from './departmentService';
 import { GuestRequest } from '@/models/types';
+import { DataSnapshot } from 'firebase/database';
 
 export const createTask = async (task: Omit<Task, 'id' | 'status' | 'createdAt'>): Promise<Task> => {
   try {
@@ -364,45 +365,49 @@ export const calculateEmployeePerformance = async (departmentId: string): Promis
 export const subscribeToTasks = (callback: (tasks: Task[]) => void): (() => void) => {
   const tasksRef = ref(database, 'tasks');
   
-  const listener = onValue(tasksRef, (snapshot) => {
-    if (!snapshot.exists()) {
+  const handleTasksChange = (snapshot: DataSnapshot) => {
+    if (snapshot.exists()) {
+      const tasks: Task[] = [];
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        tasks.push(childSnapshot.val() as Task);
+      });
+      callback(tasks);
+    } else {
       callback([]);
-      return;
     }
-    
-    const tasks: Task[] = [];
-    snapshot.forEach((childSnapshot) => {
-      tasks.push(childSnapshot.val() as Task);
-    });
-    
-    callback(tasks);
-  });
+  };
   
-  return () => off(tasksRef);
+  onValue(tasksRef, handleTasksChange);
+  
+  return () => {
+    off(tasksRef, 'value', handleTasksChange);
+  };
 };
 
 // New function to subscribe to guest requests
 export const subscribeToGuestRequests = (callback: (requests: GuestRequest[]) => void): (() => void) => {
   const requestsRef = ref(database, 'guestRequests');
   
-  const listener = onValue(requestsRef, (snapshot) => {
-    if (!snapshot.exists()) {
-      callback([]);
-      return;
-    }
-    
-    const requests: GuestRequest[] = [];
-    snapshot.forEach((childSnapshot) => {
-      requests.push({
-        id: childSnapshot.key as string,
-        ...childSnapshot.val() as Omit<GuestRequest, 'id'>
+  const handleRequestsChange = (snapshot: DataSnapshot) => {
+    if (snapshot.exists()) {
+      const requests: GuestRequest[] = [];
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        requests.push({
+          id: childSnapshot.key as string,
+          ...childSnapshot.val()
+        });
       });
-    });
-    
-    callback(requests);
-  });
+      callback(requests);
+    } else {
+      callback([]);
+    }
+  };
   
-  return () => off(requestsRef);
+  onValue(requestsRef, handleRequestsChange);
+  
+  return () => {
+    off(requestsRef, 'value', handleRequestsChange);
+  };
 }; 
 
 // New function to accept a guest request and assign it to the accepting employee

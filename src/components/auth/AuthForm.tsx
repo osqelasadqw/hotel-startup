@@ -1,9 +1,12 @@
+'use client';
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signInWithPopup 
+  signInWithPopup, 
+  AuthError 
 } from 'firebase/auth';
 import { ref, set, get } from 'firebase/database';
 import { auth, database, googleProvider } from '@/firebase/config';
@@ -103,9 +106,11 @@ const AuthForm = () => {
         // The redirection will be handled by the authentication context or AuthGuard
         router.push('/');
       }
-    } catch (error: any) {
-      console.error('Authentication error:', error);
-      setError(error.message || 'Authentication failed');
+    } catch (error) {
+      // Type assertion for the Firebase AuthError
+      const authError = error as AuthError;
+      console.error('Authentication error:', authError);
+      setError(authError.message || 'Authentication failed');
     } finally {
       setIsLoading(false);
     }
@@ -149,9 +154,11 @@ const AuthForm = () => {
       // Redirect based on existing role or new role
       router.push('/');
       
-    } catch (error: any) {
-      console.error('Google Authentication error:', error);
-      setError(error.message || 'Google Authentication failed');
+    } catch (error) {
+      // Type assertion for the Firebase AuthError
+      const authError = error as AuthError;
+      console.error('Google Authentication error:', authError);
+      setError(authError.message || 'Google Authentication failed');
     } finally {
       setIsLoading(false);
     }

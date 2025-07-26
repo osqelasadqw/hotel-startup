@@ -1,4 +1,4 @@
-import { ref, push, set, get, update, remove, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, push, set, get, update, remove } from 'firebase/database';
 import { database } from '@/firebase/config';
 import { Department, User, CommonProblem } from '@/models/types';
 

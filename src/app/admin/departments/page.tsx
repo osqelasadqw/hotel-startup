@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getDepartments, createDepartment, updateDepartment, deleteDepartment, addCommonProblemToDepartment, deleteCommonProblem } from '@/services/departmentService';
-import { Department, CommonProblem } from '@/models/types';
+import { Department } from '@/models/types';
 import AuthGuard from '@/components/auth/AuthGuard';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -20,7 +20,7 @@ const DepartmentsPage = () => {
   
   // For managing common problems
   const [problemTitle, setProblemTitle] = useState('');
-  const [problemDescription, setProblemDescription] = useState('');
+  const [, setProblemDescription] = useState('');
 
   useEffect(() => {
     fetchDepartments();

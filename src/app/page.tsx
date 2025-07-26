@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDepartments } from '@/services/departmentService';
-import { createTask, assignTask } from '@/services/taskService';
-import { Department, CommonProblem } from '@/models/types';
+import { assignTask } from '@/services/taskService';
+import { Department, CommonProblem, GuestRequest } from '@/models/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Navbar from '@/components/navigation/Navbar';
-import { ref, push, set, get, query, orderByChild, equalTo, onValue } from 'firebase/database';
+import { ref, push, set, get } from 'firebase/database';
 import { database } from '@/firebase/config';
 import { StagewiseLoader } from './_stagewise';
 
@@ -32,7 +32,7 @@ export default function Home() {
   const [showRoomPrompt, setShowRoomPrompt] = useState(false);
   
   // New state for department service requests
-  const [departmentRequests, setDepartmentRequests] = useState<any[]>([]);
+  const [departmentRequests, setDepartmentRequests] = useState<GuestRequest[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function Home() {
       const requestsRef = ref(database, 'guestRequests');
       
       const snapshot = await get(requestsRef);
-      const requests: any[] = [];
+      const requests: GuestRequest[] = [];
       
       if (snapshot.exists()) {
         snapshot.forEach((childSnapshot) => {
@@ -83,7 +83,7 @@ export default function Home() {
           // Filter by departmentId on the client side
           if (request.departmentId === departmentId) {
             requests.push({
-              id: childSnapshot.key,
+              id: childSnapshot.key as string,
               ...request
             });
           }

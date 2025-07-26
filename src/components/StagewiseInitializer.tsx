@@ -6,9 +6,13 @@ export default function StagewiseInitializer() {
   useEffect(() => {
     // Only run in development mode and browser environment
     if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      // Import only the core package
-      import('@stagewise/toolbar-next').then((stagewise) => {
+      // Import both packages asynchronously
+      Promise.all([
+        import('@stagewise/toolbar-next'),
+        import('react-dom/client')
+      ]).then(([stagewise, reactDom]) => {
         const { StagewiseToolbar } = stagewise;
+        const { createRoot } = reactDom;
         
         // Get the container element
         const container = document.getElementById('stagewise-toolbar-container');
@@ -18,7 +22,6 @@ export default function StagewiseInitializer() {
           container.appendChild(toolbar);
           
           // Render the toolbar with minimal config
-          const { createRoot } = require('react-dom/client');
           const root = createRoot(toolbar);
           root.render(<StagewiseToolbar config={{ plugins: [] }} />);
         }
