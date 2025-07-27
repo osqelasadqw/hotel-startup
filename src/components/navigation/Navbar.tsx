@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 interface NavbarProps {
   userRole?: 'department' | 'admin' | null;
@@ -18,19 +19,31 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onBackClick }) => {
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               {onBackClick ? (
                 <button 
                   onClick={onBackClick} 
-                  className="text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                  className="cursor-pointer"
                 >
-                  HotelTasker
+                  <Image 
+                    src="/logo.png" 
+                    alt="Stay Fix Logo" 
+                    width={400} 
+                    height={160} 
+                    className="h-18 w-auto"
+                  />
                 </button>
               ) : (
-                <Link href="/" className="text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors">
-                  HotelTasker
+                <Link href="/" className="transition-colors">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Stay Fix Logo" 
+                    width={400} 
+                    height={160} 
+                    className="h-18 w-auto"
+                  />
                 </Link>
               )}
             </div>

@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDepartments } from '@/services/departmentService';
 import { assignTask } from '@/services/taskService';
-import { Department, CommonProblem, GuestRequest } from '@/models/types';
+import { Department, CommonProblem } from '@/models/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Navbar from '@/components/navigation/Navbar';
-import { ref, push, set, get } from 'firebase/database';
+import { ref, push, set } from 'firebase/database';
 import { database } from '@/firebase/config';
 import { StagewiseLoader } from './_stagewise';
+import Image from 'next/image';
 
 export default function Home() {
   const { user } = useAuth();
@@ -30,21 +31,10 @@ export default function Home() {
   const [selectedProblem, setSelectedProblem] = useState<CommonProblem | null>(null);
   const [roomNumber, setRoomNumber] = useState('');
   const [showRoomPrompt, setShowRoomPrompt] = useState(false);
-  
-  // New state for department service requests
-  const [departmentRequests, setDepartmentRequests] = useState<GuestRequest[]>([]);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
   useEffect(() => {
     fetchDepartments();
   }, []);
-  
-  // New effect to fetch department requests when a department is selected
-  useEffect(() => {
-    if (selectedDepartment && selectedDepartment.id) {
-      fetchDepartmentRequests(selectedDepartment.id);
-    }
-  }, [selectedDepartment]);
 
   const fetchDepartments = async () => {
     try {
@@ -62,39 +52,6 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching departments:', error);
       setIsLoading(false);
-    }
-  };
-  
-  // New function to fetch service requests for a department
-  const fetchDepartmentRequests = async (departmentId: string) => {
-    try {
-      setIsLoadingRequests(true);
-      
-      // Fetch all guest requests and filter on client side instead of using a query
-      // This avoids the need for a Firebase index on departmentId
-      const requestsRef = ref(database, 'guestRequests');
-      
-      const snapshot = await get(requestsRef);
-      const requests: GuestRequest[] = [];
-      
-      if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-          const request = childSnapshot.val();
-          // Filter by departmentId on the client side
-          if (request.departmentId === departmentId) {
-            requests.push({
-              id: childSnapshot.key as string,
-              ...request
-            });
-          }
-        });
-      }
-      
-      setDepartmentRequests(requests.filter(req => req.status === 'pending'));
-      setIsLoadingRequests(false);
-    } catch (error) {
-      console.error('Error fetching department requests:', error);
-      setIsLoadingRequests(false);
     }
   };
 
@@ -248,8 +205,16 @@ export default function Home() {
         
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">HotelTasker</h1>
+            <div className="text-center mb-12">
+              <div className="flex justify-center mb-4">
+                <Image 
+                  src="/logo.png" 
+                  alt="Stay Fix Logo" 
+                  width={640} 
+                  height={240} 
+                  className="h-56 w-auto"
+                />
+              </div>
               <p className="text-lg text-gray-600">
                 {user.role === 'admin' ? 
                   'Welcome to the admin dashboard.' : 
@@ -291,7 +256,7 @@ export default function Home() {
           {!selectedDepartment && (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">აპარტამენტები</h1>
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">დეპარტამენტები</h1>
               </div>
               
               {successMessage && (
@@ -351,44 +316,6 @@ export default function Home() {
                   დეპარტამენტებში დაბრუნება
                 </button>
               </div>
-              
-              {/* Show pending service requests for this department */}
-              {!isLoadingRequests && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold mb-3">აქტიური მოთხოვნები ({departmentRequests.length})</h2>
-                  <div className="max-h-[200px] overflow-y-auto bg-white rounded-lg border border-gray-200 p-3">
-                    {departmentRequests.length > 0 ? (
-                      <ul className="space-y-2">
-                        {departmentRequests.map(request => (
-                          <li key={request.id} className="border-b border-gray-100 pb-2 last:border-b-0">
-                            <div className="flex justify-between">
-                              <div>
-                                <p className="font-medium">{request.title}</p>
-                                <p className="text-sm text-gray-600">ოთახი: {request.roomNumber}</p>
-                                {request.guestName && <p className="text-sm text-gray-600">სტუმარი: {request.guestName}</p>}
-                                <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString('ka-GE')}</p>
-                              </div>
-                              <div>
-                                <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
-                                  მოლოდინში
-                                </span>
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-center text-gray-500 py-4">მოთხოვნები არ არის</p>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {isLoadingRequests && (
-                <div className="flex justify-center items-center my-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              )}
               
               {selectedDepartment.commonProblems && selectedDepartment.commonProblems.length > 0 ? (
                 <>

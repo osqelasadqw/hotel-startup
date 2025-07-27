@@ -6,7 +6,7 @@ import AuthProvider from "@/context/AuthContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HotelTasker - Hotel Task Management",
+  title: "Stay Fix - Hotel Task Management",
   description: "Efficiently manage hotel service requests and task assignments",
 };
 
