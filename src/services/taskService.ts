@@ -5,6 +5,15 @@ import { getDepartmentEmployees } from './departmentService';
 import { GuestRequest } from '@/models/types';
 import { DataSnapshot } from 'firebase/database';
 
+// დავამატოთ ინტერფეისი დავალების სტატუსის განახლებისთვის
+interface TaskStatusUpdate {
+  id?: string;
+  taskId: string;
+  employeeId: string;
+  status: 'in_progress' | 'completed';
+  timestamp: string;
+}
+
 export const createTask = async (task: Omit<Task, 'id' | 'status' | 'createdAt'>): Promise<Task> => {
   try {
     const tasksRef = ref(database, 'tasks');
@@ -484,12 +493,12 @@ export const updateTaskStatus = async (taskId: string, status: 'in_progress' | '
 };
 
 // ახალი ფუნქცია დავალების სტატუსის ისტორიის მოსასმენად
-export const subscribeToTaskStatusHistory = (callback: (statusUpdates: any[]) => void): (() => void) => {
+export const subscribeToTaskStatusHistory = (callback: (statusUpdates: TaskStatusUpdate[]) => void): (() => void) => {
   const statusRef = ref(database, 'taskStatusHistory');
   
   const handleStatusChange = (snapshot: DataSnapshot) => {
     if (snapshot.exists()) {
-      const updates: any[] = [];
+      const updates: TaskStatusUpdate[] = [];
       snapshot.forEach((taskSnapshot: DataSnapshot) => {
         taskSnapshot.forEach((updateSnapshot: DataSnapshot) => {
           updates.push({
