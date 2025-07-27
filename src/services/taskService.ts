@@ -270,6 +270,9 @@ export const acceptTaskAssignment = async (taskId: string, employeeId: string): 
       assignedTo: employeeId,
       startTime
     });
+    
+    // ახალი: დავალების სტატუსის განახლების შესახებ შეტყობინების გაგზავნა
+    await updateTaskStatus(taskId, 'in_progress', employeeId);
   } catch (error) {
     console.error(`Error accepting task assignment for task ${taskId} and employee ${employeeId}:`, error);
     throw error;
@@ -316,6 +319,9 @@ export const completeTask = async (taskId: string, employeeId: string): Promise<
       status: 'completed',
       endTime
     });
+    
+    // ახალი: დავალების სტატუსის განახლების შესახებ შეტყობინების გაგზავნა
+    await updateTaskStatus(taskId, 'completed', employeeId);
   } catch (error) {
     console.error(`Error completing task ${taskId} for employee ${employeeId}:`, error);
     throw error;
@@ -454,4 +460,59 @@ export const acceptGuestRequest = async (requestId: string, employeeId: string):
     console.error(`Error accepting guest request ${requestId} for employee ${employeeId}:`, error);
     throw error;
   }
+}; 
+
+// ახალი ფუნქცია დავალების სტატუსის განახლებისთვის
+export const updateTaskStatus = async (taskId: string, status: 'in_progress' | 'completed', employeeId: string): Promise<void> => {
+  try {
+    // დავალების სტატუსის ისტორიის შენახვა
+    const taskStatusRef = ref(database, `taskStatusHistory/${taskId}`);
+    const newStatusRef = push(taskStatusRef);
+    
+    await set(newStatusRef, {
+      taskId,
+      employeeId,
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`Task ${taskId} status updated to ${status} by employee ${employeeId}`);
+  } catch (error) {
+    console.error(`Error updating task status history for task ${taskId}:`, error);
+    // არ გადავაგდოთ შეცდომა, რადგან ეს დამხმარე ფუნქციაა
+  }
+};
+
+// ახალი ფუნქცია დავალების სტატუსის ისტორიის მოსასმენად
+export const subscribeToTaskStatusHistory = (callback: (statusUpdates: any[]) => void): (() => void) => {
+  const statusRef = ref(database, 'taskStatusHistory');
+  
+  const handleStatusChange = (snapshot: DataSnapshot) => {
+    if (snapshot.exists()) {
+      const updates: any[] = [];
+      snapshot.forEach((taskSnapshot: DataSnapshot) => {
+        taskSnapshot.forEach((updateSnapshot: DataSnapshot) => {
+          updates.push({
+            ...updateSnapshot.val(),
+            id: updateSnapshot.key
+          });
+        });
+      });
+      
+      // სორტირება დროის მიხედვით, ახლიდან ძველისკენ
+      updates.sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      
+      callback(updates);
+    } else {
+      callback([]);
+    }
+  };
+  
+  onValue(statusRef, handleStatusChange);
+  
+  return () => {
+    off(statusRef, 'value', handleStatusChange);
+  };
 }; 
